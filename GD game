@@ -1,1 +1,247 @@
+#include <iostream>
+#include <fstream>
+#include <ncurses/curses.h>
+#include <Windows.h> 
+#include <unistd.h>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
 
+int main();
+
+const int WIDTH = 50;
+const int HEIGHT = 20;
+const char PLAYER_START = '[';
+const char PLAYER_END = ']';
+const char OBSTACLE_LVL1 = '!'; // Obstacle for level 1
+const char OBSTACLE_LVL2[] = "!!"; // Obstacle for level 2
+const int JUMP_HEIGHT = 3;
+const int SCORE_PER_OBSTACLE = 4;
+const int MAX_LEVEL = 2;
+
+struct Player {
+    int x, y, jumpCount;
+    bool isJumping;
+    Player(int startX, int startY) : x(startX), y(startY), jumpCount(0), isJumping(false) {}
+};
+
+struct Obstacle {
+    int x, y;
+    bool isDouble;
+    Obstacle(int startX, int startY, bool doubleObstacle) : x(startX), y(startY), isDouble(doubleObstacle) {}
+};
+
+void drawPlayer(Player &player) {
+    attron(COLOR_PAIR(1));
+    mvaddch(player.y, player.x, PLAYER_START);
+    mvaddch(player.y, player.x + 1, PLAYER_END);
+    attroff(COLOR_PAIR(1));
+}
+
+void drawObstacle(Obstacle &obstacle) {
+    attron(COLOR_PAIR(2));
+    if (obstacle.isDouble) {
+        mvaddstr(obstacle.y, obstacle.x, OBSTACLE_LVL2); // Draw double character obstacle
+    } else {
+        mvaddch(obstacle.y, obstacle.x, OBSTACLE_LVL1); // Draw single character obstacle
+    }
+    attroff(COLOR_PAIR(2));
+}
+
+void displayMessage(const char* message) {
+    mvprintw(HEIGHT / 2, (WIDTH - strlen(message)) / 2, "%s", message);
+}
+
+void displayLevelPassed(int level) {
+    char message[50];
+    snprintf(message, sizeof(message), "You passed level %d", level);
+    attron(COLOR_PAIR(3));
+    displayMessage(message);
+    attroff(COLOR_PAIR(3));
+    mvprintw(HEIGHT / 2 + 1, (WIDTH - 30) / 2, "Press 'n' for Next or 'e' to Exit");
+}
+
+void displayTryAgain() {
+    attron(COLOR_PAIR(4));
+    displayMessage("Try Again!");
+    attroff(COLOR_PAIR(4));
+    mvprintw(HEIGHT / 2 + 1, (WIDTH - 30) / 2, "Press 'b' to go back");
+}
+
+void loadingScreen() {
+    clear();
+    for (int i = 0; i <= 100; i += 25) {
+        mvprintw(10, 10, "Loading: %d%%", i);
+        refresh();
+        Sleep(500); 
+    }
+    clear();
+}
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < COLS; j++) {
+            mvprintw(10 + i, j, " "); // Clear line
+        }
+        for (int j = 0; j < strlen(welcome[i]); j++) {
+            mvprintw(10 + i, j, "%c", welcome[i][j]); // Display character by character
+            refresh();
+            Sleep(50); // Delay for animation
+        }
+    }
+    Sleep(1000);
+    clear();
+}
+
+
+void displayGameRules() {
+    const char* rules[] = {
+        "Game Rules:",
+        "Your Character is Created As []",
+        "Jump over obstacles with a maximum of 3 jumps",
+        "Your score will be counted automatically",
+        "And if you hit an obstacle, you lose"
+    };
+
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < COLS; j++) {
+            mvprintw(10 + i, j, " "); // Kosongkan baris
+        }
+        for (int j = 0; j < strlen(rules[i]); j++) {
+            mvprintw(10 + i, j, "%c", rules[i][j]); // Tampilkan karakter satu per satu
+            refresh();
+            Sleep(100); // Delay untuk animasi
+        }
+    }
+}
+
+        
+        initscr();
+        noecho();
+        cbreak();
+        curs_set(0);
+        start_color();
+        init_pair(1, COLOR_RED, COLOR_BLACK);
+        attron(COLOR_PAIR(1));
+
+        displayGameRules();
+
+        mvprintw(20, 10, "Press Enter to continue...");
+        refresh();
+        getch(); // 
+
+        attroff(COLOR_PAIR(1)); 
+        endwin(); // Akhiri ncurses
+
+    initscr();
+    noecho();
+    cbreak();
+    curs_set(0);
+    timeout(100);
+    keypad(stdscr, TRUE);
+    start_color();
+    init_pair(1, COLOR_BLUE, COLOR_BLACK);
+    init_pair(2, COLOR_RED, COLOR_BLACK);
+    init_pair(3, COLOR_GREEN, COLOR_BLACK);
+    init_pair(4, COLOR_RED, COLOR_BLACK);
+    bkgd(COLOR_BLACK); 
+
+    Player player(5, HEIGHT - 2);
+    std::vector<Obstacle> obstacles;
+    int score = 0, frameCount = 0, level = 1, obstacleSpawnRate = 20;
+
+    while (true) {
+        clear();
+        drawPlayer(player);
+        for (auto &obstacle : obstacles) drawObstacle(obstacle);
+        if (player.isJumping) {
+            if (player.jumpCount < JUMP_HEIGHT) {
+                player.y--;
+                player.jumpCount++;
+            } else if (player.jumpCount < JUMP_HEIGHT * 2) {
+                player.y++;
+                player.jumpCount++;
+            } else {
+                player.isJumping = false;
+                player.jumpCount = 0;
+            }
+        }
+        for (auto &obstacle : obstacles) obstacle.x--;
+        if (frameCount % obstacleSpawnRate == 0 && obstacles.size() < 5) {
+            if (level == 1) {
+                obstacles.emplace_back(WIDTH - 1, HEIGHT - 2, false); 
+            } else if (level == 2) {
+                obstacles.emplace_back(WIDTH - 2, HEIGHT - 2, true); 
+            }
+        }
+        if (!obstacles.empty() && obstacles.front().x < 0) {
+            obstacles.erase(obstacles.begin());
+            score += SCORE_PER_OBSTACLE;
+        }
+        for (auto &obstacle : obstacles) {
+            if ((obstacle.isDouble && obstacle.x == player.x && obstacle.y == player.y) ||
+                (!obstacle.isDouble && obstacle.x == player.x && obstacle.y == player.y)) {
+                clear();
+                displayTryAgain();
+                refresh();
+                while (true) {
+                    int ch = getch();
+                    if (ch == 'b') {
+                        player.y = HEIGHT - 2;
+                        player.isJumping = false;
+                        player.jumpCount = 0;
+                        obstacles.clear();
+                        score = 0;
+                        frameCount = 0;
+                        break;
+                    }
+                }
+            }
+        }
+        mvprintw(0, 0, "Score: %d", score);
+        refresh();
+        int ch = getch();
+        if (ch == ' ') {
+            if (!player.isJumping) {
+                player.isJumping = true;
+            }
+        }
+        Sleep(1);
+        frameCount++;
+        if (score >= 20 * level) { 
+            displayLevelPassed(level);
+            refresh();
+            char choice;
+            while (true) {
+                choice = getch();
+                if (choice == 'n') {
+                    if (level < MAX_LEVEL) {
+                        level++;
+                        score = 0;
+                        obstacles.clear();
+                        frameCount = 0;
+                        obstacleSpawnRate = std::max(10, 20 - level);
+                    } else {
+                        displayMessage("Maximum level reached!");
+                        refresh();
+                        Sleep(1000);
+                    }
+                    break;
+                } else if (choice == 'e') {
+                    mvprintw(HEIGHT / 2, (WIDTH - 30) / 2, "Exiting game...");
+                    refresh();
+                    Sleep(1000);
+                    endwin();
+                    return 0;
+                }
+            }
+        }
+    }
+
+    mvprintw(HEIGHT / 2, (WIDTH - 30) / 2, "Congratulations! You've completed all levels!");
+    mvprintw(HEIGHT / 2 + 1, (WIDTH - 20) / 2, "Final Score: %d", score);
+    refresh();
+    getch();
+    endwin();
+    return 0;
+}
