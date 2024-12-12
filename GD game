@@ -14,8 +14,8 @@ const int WIDTH = 50;
 const int HEIGHT = 20;
 const char PLAYER_START = '[';
 const char PLAYER_END = ']';
-const char OBSTACLE_LVL1 = '!'; // Obstacle for level 1
-const char OBSTACLE_LVL2[] = "!!"; // Obstacle for level 2
+const char OBSTACLE_LVL1 = '!'; 
+const char OBSTACLE_LVL2[] = "!!"; 
 const int JUMP_HEIGHT = 3;
 const int SCORE_PER_OBSTACLE = 4;
 const int MAX_LEVEL = 2;
@@ -42,9 +42,9 @@ void drawPlayer(Player &player) {
 void drawObstacle(Obstacle &obstacle) {
     attron(COLOR_PAIR(2));
     if (obstacle.isDouble) {
-        mvaddstr(obstacle.y, obstacle.x, OBSTACLE_LVL2); // Draw double character obstacle
+        mvaddstr(obstacle.y, obstacle.x, OBSTACLE_LVL2); 
     } else {
-        mvaddch(obstacle.y, obstacle.x, OBSTACLE_LVL1); // Draw single character obstacle
+        mvaddch(obstacle.y, obstacle.x, OBSTACLE_LVL1);
     }
     attroff(COLOR_PAIR(2));
 }
@@ -84,7 +84,7 @@ void loadingScreen() {
             mvprintw(10 + i, j, " "); // Clear line
         }
         for (int j = 0; j < strlen(welcome[i]); j++) {
-            mvprintw(10 + i, j, "%c", welcome[i][j]); // Display character by character
+            mvprintw(10 + i, j, "%c", welcome[i][j]); 
             refresh();
             Sleep(50); // Delay for animation
         }
@@ -108,13 +108,13 @@ void displayGameRules() {
             mvprintw(10 + i, j, " "); // Kosongkan baris
         }
         for (int j = 0; j < strlen(rules[i]); j++) {
-            mvprintw(10 + i, j, "%c", rules[i][j]); // Tampilkan karakter satu per satu
+            mvprintw(10 + i, j, "%c", rules[i][j]); 
             refresh();
             Sleep(100); // Delay untuk animasi
         }
     }
 }
-
+-chay
         
         initscr();
         noecho();
