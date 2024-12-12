@@ -79,6 +79,14 @@ void loadingScreen() {
     clear();
 }
 
+void displayWelcomeScreen() {
+    const char* welcome[] = {
+        "========================================",
+        "        WELCOME TO THE GD GAME          ",
+        "  A Fun Adventure Awaits You! Get Ready! ",
+        "========================================"
+    };
+
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < COLS; j++) {
             mvprintw(10 + i, j, " "); // Clear line
@@ -86,13 +94,35 @@ void loadingScreen() {
         for (int j = 0; j < strlen(welcome[i]); j++) {
             mvprintw(10 + i, j, "%c", welcome[i][j]); 
             refresh();
-            Sleep(50); // Delay for animation
+            Sleep(50); 
         }
     }
     Sleep(1000);
     clear();
 }
 
+void registration() {
+    ofstream myFile, accList;
+    string userReg;
+
+    system("cls");
+    cout << "------------>REGISTER<------------" << endl;
+    cout << "Enter username : ";
+    cin >> userReg;
+
+    cout << endl;
+
+    myFile.open(userReg + ".txt");
+    myFile << 0;
+    myFile.close();
+
+    accList.open("ListAccount.txt", ios::app);
+    accList << userReg << endl;
+
+    system("cls");
+    cout << "Registration successful" << endl;
+    main();
+}
 
 void displayGameRules() {
     const char* rules[] = {
@@ -105,17 +135,42 @@ void displayGameRules() {
 
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < COLS; j++) {
-            mvprintw(10 + i, j, " "); // Kosongkan baris
+            mvprintw(10 + i, j, " ");
         }
         for (int j = 0; j < strlen(rules[i]); j++) {
             mvprintw(10 + i, j, "%c", rules[i][j]); 
             refresh();
-            Sleep(100); // Delay untuk animasi
+            Sleep(100); 
         }
     }
 }
--chay
-        
+
+void login() {
+    ifstream myFile;
+    string userLog;
+    string userData;
+
+    bool exist = false;
+
+    system("cls");
+    cout << "------------>LOGIN<------------" << endl;
+    cout << "Enter username : ";
+    cin >> userLog;
+
+    cout << endl;
+
+    myFile.open("ListAccount.txt");
+    while (myFile >> userData) {
+        if (userData == userLog) {
+            exist = true;
+        }
+    }
+    myFile.close();
+
+    if (exist == true) {
+        myFile.open(userLog + ".txt");
+        system("cls");
+
         initscr();
         noecho();
         cbreak();
@@ -128,10 +183,46 @@ void displayGameRules() {
 
         mvprintw(20, 10, "Press Enter to continue...");
         refresh();
-        getch(); // 
+        getch();
 
         attroff(COLOR_PAIR(1)); 
-        endwin(); // Akhiri ncurses
+        endwin();
+     } else {
+        system("cls");
+        cout << "---------------------------------------" << endl;
+        cout << "             LOGIN ERROR               " << endl;
+        cout << "Please check your username ------------" << endl;
+        cout << "---------------------------------------" << endl;
+        main();
+    }
+}
+
+int main() {
+    int choice;
+
+    initscr();
+    noecho();
+    cbreak();
+    curs_set(0);
+    displayWelcomeScreen();
+    endwin();
+
+    cout << "1. Registration" << endl;
+    cout << "2. Login" << endl;
+    cout << "Input your choice : ";
+    cin >> choice;
+
+    switch (choice) {
+        case 1:
+            registration();
+            break;
+        case 2:
+            login();
+            break;
+        default:
+            cout << "Invalid choice. Please try again." << endl;
+            main(); 
+    }
 
     initscr();
     noecho();
